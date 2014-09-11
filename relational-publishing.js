@@ -1,1 +1,3 @@
-Mongo.Cursor.prototype;
+Mongo.Cursor.prototype.relate = function() {
+	
+};
