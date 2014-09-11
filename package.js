@@ -11,4 +11,5 @@ Package.onUse(function(api) {
 Package.onTest(function(api) {
 	api.use('tinytest');
 	api.use('base:relational-publishing');
+	api.addFiles('tests/test.js');
 });
