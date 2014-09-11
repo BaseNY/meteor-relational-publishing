@@ -6,10 +6,12 @@ Package.describe({
 
 Package.onUse(function(api) {
 	api.versionsFrom('METEOR@0.9.0');
+	api.addFiles('relational-publishing.js', 'server');
 });
 
 Package.onTest(function(api) {
 	api.use('tinytest');
+	api.use('mongo');
 	api.use('base:relational-publishing');
 	api.addFiles('tests/test.js');
 });
