@@ -6,12 +6,24 @@ Package.describe({
 
 Package.onUse(function(api) {
 	api.versionsFrom('METEOR@0.9.0');
-	api.use('mongo');
-	api.addFiles('relational-publishing.js', 'server');
+
+	api.addFiles('hashset.js', 'server');
+
+	api.use([
+		'underscore',
+		//'ejson',
+		'mongo'
+	]);
+	api.addFiles('relational_publish.js', 'server');
 });
 
 Package.onTest(function(api) {
-	api.use('tinytest');
+	api.use([
+		'underscore',
+		'mongo',
+		'tinytest',
+		'test-helpers'
+	]);
 	api.use('base:relational-publishing');
-	api.addFiles('tests/test.js');
+	api.addFiles('tests/publish_test.js');
 });
