@@ -45,19 +45,18 @@ if (Meteor.isServer) {
 		}
 	});
 
-	Meteor.relationalPublish('B_in_A', function() {
-		return A.find().relate(this, {
+	Meteor.relationalPublish('B in A', function() {
+		return A.find().relate({
 			b: function() {
 				return B.find(this.bId);
 			}
 		});
 	});
 
-	Meteor.relationalPublish('C_in_B_in_A', function() {
-		var sub = this;
-		return A.find().relate(sub, {
+	Meteor.relationalPublish('C in B in A', function() {
+		return A.find().relate({
 			b: function() {
-				return B.find(this.bId).relate(sub, { // the this in this relate is not the correct one
+				return B.find(this.bId).relate({ // the this in this relate is not the correct one
 					c: function() {
 						return C.find(this.cId);
 					}
@@ -66,8 +65,8 @@ if (Meteor.isServer) {
 		});
 	});
 
-	Meteor.relationalPublish('C_and_B_in_A', function() {
-		return A.find().relate(this, {
+	Meteor.relationalPublish('C and B in A', function() {
+		return A.find().relate({
 			b: function() {
 				return B.find(this.bId);
 			},
@@ -85,7 +84,7 @@ if (Meteor.isClient) {
 				this.equal(collection.find().count(), 0, "Expected no documents to be found because not subscribed yet");
 			},
 			collectionNotEmpty: function(collection) {
-				this.isTrue(A.find().count() > 0, "Expected a document to be found");
+				this.isTrue(collection.find().count() > 0, "Expected a document to be found");
 			},
 			expectError: function(err) {
 				this.isTrue(err instanceof Error, "Expected an error to be thrown");
@@ -121,7 +120,7 @@ if (Meteor.isClient) {
 				onError: callback
 			});
 		},
-		// unsubscribing
+		// unsubscribe
 		function(test, expect) {
 			var callback = expect(function(err) {
 				err && test.exception(err);
@@ -150,27 +149,35 @@ if (Meteor.isClient) {
 				onReady: callback,
 				onError: callback
 			});
+		},
+		// unsubscribe again
+		function(test, expect) {
+			var callback = expect(function(err) {
+				err && test.exception(err);
+			});
+			Meteor.subscribe('regularPublish', {
+				unsubscribe: true
+			}, {
+				onReady: callback,
+				onError: callback
+			});
 		}
 	]);
 
-/*	Tinytest.addAsync("Relational Publishing - Relations", function(test, next) {
-		var onError = function(err) {
-			test.exception(err);
+	Tinytest.addAsync("Relational Publishing - Relations - B in A", function(test, next) {
+		test.collectionEmpty(A);
+		var callback = function(err) {
+			if (err) {
+				test.exception(err);
+			} else {
+				test.collectionNotEmpty(A);
+				test.collectionNotEmpty(B);
+			}
 			next();
 		};
-		Meteor.subscribe('regularPublish', true, {
-			onReady: function() {
-				test.isCollectionEmpty(A);
-				Meteor.subscribe('bInA', {
-					onReady: function() {
-						console.log('A', A.find().fetch());
-						//console.log('B', B.find().fetch());
-						next();
-					},
-					onError: onError
-				});
-			},
-			onError: onError
+		Meteor.subscribe('B in A', {
+			onReady: callback,
+			onError: callback
 		});
-	});*/
+	});
 }

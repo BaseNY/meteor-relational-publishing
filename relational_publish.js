@@ -17,34 +17,37 @@ Cursor.prototype.relate = function(relations) {
 
 // handler supposedly runs in a Fiber
 Meteor.relationalPublish = function(name, handler) {
-	Meteor.publish(name, function(/* arguments */) {
-		var sub = this, args = arguments;
+	Meteor.publish(name, (function() {
+		var publishHandler = function(/* arguments */) {
+			var sub = this, args = arguments;
 
-		var cursor = IsRelationalPublish.withValue(true, function() {
-			return handler.apply(sub, args);
-		});
-		var collectionName = cursor._getCollectionName();
-		if (_.has(cursor, 'relations')) {
-			var relations = cursor.relations;
-			var observeHandle = cursor.observeChanges({
-				added: function(id, fields) {
-					sub.added(collectionName, id, fields);
-				},
-				changed: function(id, fields) {
-					sub.changed(collectionName, id, fields);
-				},
-				removed: function(id) {
-					sub.removed(collectionName, id);
-				}
+			var cursor = IsRelationalPublish.withValue(true, function() {
+				return handler.apply(sub, args);
 			});
-			sub.onStop(function() {
-				observeHandle.stop();
-			});
-			sub.ready();
-		} else {
-			return cursor;
+			var collectionName = cursor._getCollectionName();
+			if (_.has(cursor, 'relations')) {
+				var relations = cursor.relations;
+				var observeHandle = cursor.observeChanges({
+					added: function(id, fields) {
+						sub.added(collectionName, id, fields);
+					},
+					changed: function(id, fields) {
+						sub.changed(collectionName, id, fields);
+					},
+					removed: function(id) {
+						sub.removed(collectionName, id);
+					}
+				});
+				sub.onStop(function() {
+					observeHandle.stop();
+				});
+				sub.ready();
+			} else {
+				return cursor;
+			}
 		}
-	});
+		return publishHandler;
+	})());
 };
 
 /*
