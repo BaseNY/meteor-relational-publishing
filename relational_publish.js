@@ -15,6 +15,13 @@ Cursor.prototype.relate = function(relations) {
 	}
 };
 
+var publishRelation = function(sub, args, handler) {
+	var cursor = IsRelationalPublish.withValue(true, function() {
+		return handler.apply(sub, args);
+	});
+	var collectionName = cursor._getCollectionName();
+};
+
 // handler supposedly runs in a Fiber
 Meteor.relationalPublish = function(name, handler) {
 	Meteor.publish(name, (function() {

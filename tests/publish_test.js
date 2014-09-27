@@ -13,6 +13,15 @@ if (Meteor.isServer) {
 		return A.find().relate();
 	});
 
+	Meteor.publish('unsubscribe', function() {
+		var selector = {_id: null};
+		return [
+			A.find(selector),
+			B.find(selector),
+			C.find(selector)
+		];
+	});
+
 	var cId = C.insert({
 		cField: 'c field'
 	});
@@ -36,9 +45,7 @@ if (Meteor.isServer) {
 
 	Meteor.relationalPublish('regularPublish', function(params) {
 		params = params || {};
-		if (params.unsubscribe) {
-			return A.find({_id: null});
-		} else if (params.relate) {
+		if (params.relate) {
 			return A.find().relate();
 		} else {
 			return A.find();
@@ -84,7 +91,7 @@ if (Meteor.isClient) {
 				this.equal(collection.find().count(), 0, "Expected no documents to be found because not subscribed yet");
 			},
 			collectionNotEmpty: function(collection) {
-				this.isTrue(collection.find().count() > 0, "Expected a document to be found");
+				this.isTrue(collection.find().count() > 0, "Expected a document to be found in collection: " + collection._name);
 			},
 			expectError: function(err) {
 				this.isTrue(err instanceof Error, "Expected an error to be thrown");
@@ -125,9 +132,7 @@ if (Meteor.isClient) {
 			var callback = expect(function(err) {
 				err && test.exception(err);
 			});
-			Meteor.subscribe('regularPublish', {
-				unsubscribe: true
-			}, {
+			Meteor.subscribe('unsubscribe', {
 				onReady: callback,
 				onError: callback
 			});
@@ -155,14 +160,19 @@ if (Meteor.isClient) {
 			var callback = expect(function(err) {
 				err && test.exception(err);
 			});
-			Meteor.subscribe('regularPublish', {
-				unsubscribe: true
-			}, {
+			Meteor.subscribe('unsubscribe', {
 				onReady: callback,
 				onError: callback
 			});
 		}
 	]);
+
+	var unsubscribeCollections = function(callback) {
+		Meteor.subscribe('unsubscribe', {
+			onReady: callback,
+			onError: callback
+		});
+	};
 
 	Tinytest.addAsync("Relational Publishing - Relations - B in A", function(test, next) {
 		test.collectionEmpty(A);
@@ -178,6 +188,17 @@ if (Meteor.isClient) {
 		Meteor.subscribe('B in A', {
 			onReady: callback,
 			onError: callback
+		});
+	});
+
+	Tinytest.addAsync("Relational Publishing - Relations - C in B in A", function(test, next) {
+		unsubscribeCollections(function(err) {
+			if (err) {
+				test.exception(err);
+			} else {
+				test.collectionEmpty(A);
+			}
+			next();
 		});
 	});
 }
